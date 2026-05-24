@@ -1,0 +1,1565 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Invoice Generator</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gold: #C9A84C;
+    --gold-light: #F0D080;
+    --green: #1B5E20;
+    --green-mid: #2E7D32;
+    --green-light: #4CAF50;
+    --cream: #FAFAF5;
+    --dark: #1A1A1A;
+    --gray: #6B6B6B;
+    --border: #E0DDD5;
+    --aerosky-bg: linear-gradient(135deg, #0a1f0a 0%, #1B5E20 50%, #0a1f0a 100%);
+    --dev-bg: linear-gradient(135deg, #1a0a00 0%, #5D2E0C 50%, #1a0a00 100%);
+    --shadow: 0 20px 60px rgba(0,0,0,0.15);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: #F4F1EA;
+    min-height: 100vh;
+    color: var(--dark);
+  }
+
+  /* ─── TOP SELECTOR ─── */
+  .selector-screen {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    background: radial-gradient(ellipse at 60% 40%, #f0e8d0 0%, #E8E2D5 60%, #D8D0C0 100%);
+  }
+
+  .selector-screen h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    color: var(--dark);
+    text-align: center;
+    margin-bottom: 12px;
+    letter-spacing: -0.02em;
+  }
+
+  .selector-screen .sub {
+    color: var(--gray);
+    font-size: 1rem;
+    margin-bottom: 60px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-weight: 500;
+  }
+
+  .company-cards {
+    display: flex;
+    gap: 32px;
+    flex-wrap: wrap;
+    justify-content: center;
+    max-width: 900px;
+  }
+
+  .company-card {
+    width: 380px;
+    border-radius: 24px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    box-shadow: var(--shadow);
+    position: relative;
+  }
+
+  .company-card:hover {
+    transform: translateY(-8px) scale(1.01);
+    box-shadow: 0 40px 80px rgba(0,0,0,0.25);
+  }
+
+  .card-banner {
+    padding: 40px 32px 28px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    position: relative;
+  }
+
+  .card-banner.aerosky { background: var(--aerosky-bg); }
+  .card-banner.dev { background: var(--dev-bg); }
+
+  .card-badge {
+    font-size: 0.65rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--gold-light);
+    margin-bottom: 16px;
+    font-weight: 600;
+  }
+
+  .card-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 2rem;
+    color: var(--gold);
+    font-weight: 700;
+    line-height: 1.1;
+    margin-bottom: 8px;
+  }
+
+  .card-tagline {
+    font-size: 0.8rem;
+    color: rgba(255,255,255,0.7);
+    letter-spacing: 0.06em;
+  }
+
+  .card-meta {
+    background: white;
+    padding: 24px 32px;
+  }
+
+  .card-meta .meta-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.85rem;
+  }
+
+  .card-meta .meta-row:last-child { border-bottom: none; }
+  .card-meta .meta-row .label { color: var(--gray); }
+  .card-meta .meta-row .val { font-weight: 600; color: var(--dark); }
+
+  .card-cta {
+    display: block;
+    width: calc(100% - 64px);
+    margin: 0 32px 24px;
+    padding: 14px;
+    border: none;
+    border-radius: 12px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    letter-spacing: 0.05em;
+    transition: filter 0.2s;
+  }
+
+  .card-cta:hover { filter: brightness(1.1); }
+  .aerosky-cta { background: var(--green); color: white; }
+  .dev-cta { background: #8B3A0A; color: white; }
+
+  /* ─── FORM ─── */
+  .form-page {
+    display: none;
+    min-height: 100vh;
+    background: var(--cream);
+  }
+
+  .form-page.active { display: block; }
+
+  .form-header {
+    padding: 28px 48px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+    background: white;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.06);
+  }
+
+  .form-header .company-pill {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .pill-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+  }
+
+  .aerosky-dot { background: var(--green); }
+  .dev-dot { background: #8B3A0A; }
+
+  .form-header h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.3rem;
+    font-weight: 600;
+  }
+
+  .header-btns { display: flex; gap: 12px; }
+
+  .btn-back {
+    padding: 10px 20px;
+    border: 1px solid var(--border);
+    background: white;
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.85rem;
+    color: var(--gray);
+    transition: all 0.2s;
+  }
+
+  .btn-back:hover { background: var(--border); color: var(--dark); }
+
+  .btn-preview {
+    padding: 10px 24px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 600;
+    transition: filter 0.2s;
+    color: white;
+  }
+
+  .btn-preview:hover { filter: brightness(1.1); }
+  .aerosky-btn { background: var(--green); }
+  .dev-btn { background: #8B3A0A; }
+
+  .form-body {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 40px 48px;
+  }
+
+  .form-section {
+    background: white;
+    border-radius: 16px;
+    padding: 32px;
+    margin-bottom: 24px;
+    border: 1px solid var(--border);
+  }
+
+  .section-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 24px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .section-icon { font-size: 1.2rem; }
+
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+  }
+
+  .form-grid.three { grid-template-columns: 1fr 1fr 1fr; }
+  .form-grid.full { grid-template-columns: 1fr; }
+
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .field.span2 { grid-column: span 2; }
+
+  label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--gray);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  input, textarea, select {
+    padding: 11px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem;
+    color: var(--dark);
+    background: var(--cream);
+    transition: border-color 0.2s;
+    outline: none;
+  }
+
+  input:focus, textarea:focus, select:focus {
+    border-color: var(--gold);
+    background: white;
+  }
+
+  /* ─── LINE ITEMS ─── */
+  .items-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 8px;
+  }
+
+  .items-table th {
+    text-align: left;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--gray);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 8px 12px;
+    border-bottom: 2px solid var(--border);
+  }
+
+  .items-table td {
+    padding: 8px 6px;
+    vertical-align: middle;
+  }
+
+  .items-table input {
+    width: 100%;
+    padding: 9px 10px;
+    font-size: 0.88rem;
+  }
+
+  .remove-btn {
+    background: none;
+    border: none;
+    color: #CC3333;
+    cursor: pointer;
+    font-size: 1.1rem;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: background 0.2s;
+  }
+
+  .remove-btn:hover { background: #FEE; }
+
+  .add-item-btn {
+    margin-top: 14px;
+    padding: 10px 18px;
+    border: 1.5px dashed var(--border);
+    background: white;
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.85rem;
+    color: var(--gray);
+    font-weight: 500;
+    transition: all 0.2s;
+  }
+
+  .add-item-btn:hover { border-color: var(--gold); color: var(--dark); }
+
+  /* ─── TOTALS ─── */
+  .totals-box {
+    background: var(--cream);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    margin-top: 16px;
+  }
+
+  .totals-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    font-size: 0.92rem;
+  }
+
+  .totals-row.total {
+    font-size: 1.1rem;
+    font-weight: 700;
+    border-top: 2px solid var(--border);
+    padding-top: 14px;
+    margin-top: 4px;
+  }
+
+  /* ─── INVOICE PREVIEW ─── */
+  .preview-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 1000;
+    overflow-y: auto;
+    padding: 40px 20px;
+  }
+
+  .preview-overlay.active { display: flex; flex-direction: column; align-items: center; }
+
+  .preview-actions {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 20px;
+    position: sticky;
+    top: 40px;
+    z-index: 10;
+  }
+
+  .preview-actions button {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 600;
+    font-size: 0.9rem;
+    transition: filter 0.2s;
+  }
+
+  .preview-actions button:hover { filter: brightness(1.1); }
+  .print-btn { background: white; color: var(--dark); }
+  .close-btn { background: rgba(255,255,255,0.15); color: white; }
+
+  /* ─── INVOICE PAPER ─── */
+  .invoice-paper {
+    width: 794px; /* A4 at 96dpi = 210mm */
+    min-height: 1123px; /* A4 at 96dpi = 297mm */
+    background: white;
+    padding: 0;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.4);
+    border-radius: 4px;
+    overflow: hidden;
+    font-size: 11px;
+  }
+
+  .inv-header-aerosky {
+    background: var(--aerosky-bg);
+    padding: 32px 40px 24px;
+    color: white;
+  }
+
+  .inv-header-dev {
+    padding: 28px 40px 20px;
+    border-bottom: 3px solid var(--dark);
+  }
+
+  .inv-company-name-aerosky {
+    font-family: 'Playfair Display', serif;
+    font-size: 28px;
+    color: var(--gold);
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    margin-bottom: 4px;
+  }
+
+  .inv-company-name-dev {
+    font-family: 'Playfair Display', serif;
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--dark);
+    margin-bottom: 2px;
+  }
+
+  .inv-tagline-aerosky {
+    font-size: 10px;
+    color: rgba(255,255,255,0.7);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .inv-tagline-dev {
+    font-size: 9px;
+    color: var(--gray);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+
+  .inv-address-aerosky {
+    font-size: 9.5px;
+    color: rgba(255,255,255,0.75);
+    line-height: 1.6;
+  }
+
+  .inv-address-dev {
+    font-size: 9.5px;
+    color: var(--gray);
+    line-height: 1.6;
+  }
+
+  .inv-title-strip-aerosky {
+    background: var(--gold);
+    text-align: center;
+    padding: 8px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.25em;
+    color: var(--dark);
+    text-transform: uppercase;
+  }
+
+  .inv-title-strip-dev {
+    background: var(--dark);
+    text-align: center;
+    padding: 8px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.25em;
+    color: white;
+    text-transform: uppercase;
+  }
+
+  .inv-meta {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+    padding: 24px 40px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .inv-meta-block h4 {
+    font-size: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--gray);
+    margin-bottom: 8px;
+    font-weight: 600;
+  }
+
+  .inv-meta-block p {
+    font-size: 10.5px;
+    line-height: 1.7;
+    color: var(--dark);
+    font-weight: 500;
+  }
+
+  .inv-details-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    border-top: 1px solid var(--border);
+    margin-top: 16px;
+  }
+
+  .inv-detail-cell {
+    padding: 10px 12px;
+    border-right: 1px solid var(--border);
+  }
+
+  .inv-detail-cell:last-child { border-right: none; }
+  .inv-detail-cell .dkey { font-size: 7.5px; color: var(--gray); text-transform: uppercase; letter-spacing: 0.1em; font-weight: 600; }
+  .inv-detail-cell .dval { font-size: 11px; font-weight: 700; margin-top: 3px; color: var(--dark); }
+
+  .inv-table-wrap { padding: 0 40px 24px; }
+
+  .inv-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+  }
+
+  .inv-table thead tr {
+    background: var(--dark);
+    color: white;
+  }
+
+  .aerosky-thead { background: var(--green) !important; }
+
+  .inv-table th {
+    padding: 10px 12px;
+    font-size: 9px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    text-align: left;
+  }
+
+  .inv-table th:last-child, .inv-table td:last-child { text-align: right; }
+  .inv-table th:nth-child(2), .inv-table td:nth-child(2) { text-align: center; }
+  .inv-table th:nth-child(3), .inv-table td:nth-child(3) { text-align: center; }
+
+  .inv-table tbody tr { border-bottom: 1px solid var(--border); }
+  .inv-table tbody tr:nth-child(even) { background: var(--cream); }
+
+  .inv-table td {
+    padding: 11px 12px;
+    font-size: 10.5px;
+    color: var(--dark);
+    vertical-align: top;
+  }
+
+  .inv-footer-section {
+    display: grid;
+    grid-template-columns: 1fr 280px;
+    gap: 0;
+    padding: 0 40px 32px;
+    align-items: start;
+  }
+
+  .inv-totals {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  .inv-totals-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 9px 14px;
+    font-size: 10.5px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .inv-totals-row:last-child { border-bottom: none; }
+  .inv-totals-row.grand {
+    background: var(--dark);
+    color: white;
+    font-weight: 700;
+    font-size: 12px;
+  }
+
+  .inv-totals-row.grand.aerosky-grand { background: var(--green); }
+
+  .inv-words-box {
+    background: var(--cream);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px;
+    margin-top: 16px;
+    font-size: 9.5px;
+    line-height: 1.5;
+    color: var(--gray);
+  }
+
+  .inv-words-box strong { color: var(--dark); font-size: 10px; display: block; margin-bottom: 4px; }
+
+  .inv-signature-block {
+    text-align: right;
+    padding-top: 40px;
+    font-size: 10px;
+    color: var(--gray);
+  }
+
+  .inv-signature-block .sig-name {
+    font-weight: 700;
+    color: var(--dark);
+    font-size: 11px;
+    margin-top: 8px;
+    font-family: 'Playfair Display', serif;
+  }
+
+  .inv-terms {
+    padding: 20px 40px;
+    background: var(--cream);
+    border-top: 1px solid var(--border);
+    font-size: 9px;
+    color: var(--gray);
+    line-height: 1.7;
+  }
+
+  .inv-terms strong { color: var(--dark); display: block; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.08em; font-size: 8.5px; }
+
+  .bank-details {
+    background: #f0f8f0;
+    border: 1px solid #c8e6c9;
+    border-radius: 8px;
+    padding: 14px;
+    font-size: 9.5px;
+    line-height: 1.7;
+  }
+
+  .bank-details strong { display: block; margin-bottom: 4px; font-size: 9px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--green); }
+
+  @media print {
+    @page { size: A4 portrait; margin: 0; }
+    body { background: white; margin: 0; padding: 0; }
+    .selector-screen, .form-page, .preview-actions { display: none !important; }
+    .preview-overlay {
+      position: static !important;
+      background: none !important;
+      padding: 0 !important;
+      display: block !important;
+    }
+    .invoice-paper {
+      width: 210mm !important;
+      min-height: 297mm !important;
+      box-shadow: none !important;
+      border-radius: 0 !important;
+    }
+    * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ─── SELECTOR SCREEN ─── -->
+<div class="selector-screen" id="selectorScreen">
+  <h1>Invoice Generator</h1>
+  <p class="sub">Select your company to create an invoice</p>
+
+  <div class="company-cards">
+    <!-- AEROSKY -->
+    <div class="company-card" onclick="selectCompany('aerosky')">
+      <div class="card-banner aerosky">
+        <div class="card-badge">✈ Est. 2001 · Tax Invoice</div>
+        <div class="card-name">AEROSKY<br>HOSPITALITY</div>
+        <div class="card-tagline">A Luxury Catering & Decor Company</div>
+      </div>
+      <div class="card-meta">
+        <div class="meta-row"><span class="label">Address</span><span class="val">Raj Nagar, Palam, Delhi</span></div>
+        <div class="meta-row"><span class="label">GSTIN</span><span class="val">07CXEPP0735N2Z3</span></div>
+        <div class="meta-row"><span class="label">Contact</span><span class="val">8800878545</span></div>
+        <div class="meta-row"><span class="label">Tax Type</span><span class="val">CGST + SGST / IGST</span></div>
+      </div>
+      <button class="card-cta aerosky-cta">Create Aerosky Invoice →</button>
+    </div>
+
+    <!-- DEV CATERERS -->
+    <div class="company-card" onclick="selectCompany('dev')">
+      <div class="card-banner dev">
+        <div class="card-badge">🍽 Corporate & Wedding Events</div>
+        <div class="card-name">DEV CATERERS<br>& DECORATORS</div>
+        <div class="card-tagline">Corporate · Wedding · Entertainment · Decoration</div>
+      </div>
+      <div class="card-meta">
+        <div class="meta-row"><span class="label">Address</span><span class="val">Dwarka Sector 9, New Delhi</span></div>
+        <div class="meta-row"><span class="label">Plot No</span><span class="val">22, Sector 9, 110077</span></div>
+        <div class="meta-row"><span class="label">Mobile</span><span class="val">9811339509</span></div>
+        <div class="meta-row"><span class="label">Tax Type</span><span class="val">No GST (Non-Tax Invoice)</span></div>
+      </div>
+      <button class="card-cta dev-cta">Create Dev Caterers Invoice →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── FORM PAGE ─── -->
+<div class="form-page" id="formPage">
+  <div class="form-header">
+    <div class="company-pill">
+      <div class="pill-dot" id="headerDot"></div>
+      <h2 id="headerTitle">Invoice Form</h2>
+    </div>
+    <div class="header-btns">
+      <button class="btn-back" onclick="goBack()">← Back</button>
+      <button class="btn-preview" id="previewBtn" onclick="showPreview()">Preview Invoice</button>
+    </div>
+  </div>
+
+  <div class="form-body">
+    <!-- BUYER DETAILS -->
+    <div class="form-section">
+      <div class="section-title"><span class="section-icon">🏢</span> Buyer / Client Details</div>
+      <div class="form-grid">
+        <div class="field span2">
+          <label>Company / Buyer Name</label>
+          <input type="text" id="buyerName" value="AMBIT BUILDWELL PRIVATE LIMITED" placeholder="Company or person name">
+        </div>
+        <div class="field span2">
+          <label>Address Line 1</label>
+          <input type="text" id="buyerAddr1" value="PLOT NO. C3H1, SECTOR 129," placeholder="Address">
+        </div>
+        <div class="field span2">
+          <label>Address Line 2 (City, State, PIN)</label>
+          <input type="text" id="buyerAddr2" value="NOIDA, UTTAR PRADESH 201301" placeholder="City, State, PIN">
+        </div>
+        <div class="field">
+          <label>GSTIN (if applicable)</label>
+          <input type="text" id="buyerGstin" value="09AAHCA1601M1ZR" placeholder="Buyer GSTIN">
+        </div>
+        <div class="field">
+          <label>State</label>
+          <input type="text" id="buyerState" value="UTTAR PRADESH" placeholder="State">
+        </div>
+      </div>
+    </div>
+
+    <!-- INVOICE DETAILS -->
+    <div class="form-section">
+      <div class="section-title"><span class="section-icon">📄</span> Invoice Details</div>
+      <div class="form-grid three">
+        <div class="field">
+          <label>Invoice Number</label>
+          <input type="text" id="invoiceNo" value="" placeholder="e.g. 104">
+        </div>
+        <div class="field">
+          <label>Invoice Date</label>
+          <input type="date" id="invoiceDate">
+        </div>
+        <div class="field">
+          <label>Date of Supply</label>
+          <input type="text" id="supplyDate" placeholder="e.g. 25 June 2025">
+        </div>
+      </div>
+    </div>
+
+    <!-- VENUE -->
+    <div class="form-section">
+      <div class="section-title"><span class="section-icon">📍</span> Venue / Function Details</div>
+      <div class="form-grid">
+        <div class="field span2">
+          <label>Venue / Function Address</label>
+          <input type="text" id="venueAddr" value="" placeholder="e.g. Paras Estate, Meerut, UP">
+        </div>
+      </div>
+    </div>
+
+    <!-- LINE ITEMS -->
+    <div class="form-section">
+      <div class="section-title"><span class="section-icon">🍽</span> Line Items</div>
+      <table class="items-table" id="itemsTable">
+        <thead>
+          <tr>
+            <th style="width:44%">Description</th>
+            <th style="width:16%;text-align:center">Qty / PAX</th>
+            <th style="width:16%;text-align:center">Rate (₹)</th>
+            <th style="width:18%;text-align:right">Amount (₹)</th>
+            <th style="width:6%"></th>
+          </tr>
+        </thead>
+        <tbody id="itemsBody"></tbody>
+      </table>
+      <button class="add-item-btn" onclick="addItem()">+ Add Line Item</button>
+
+      <!-- TOTALS -->
+      <div class="totals-box" id="totalsBox">
+        <div class="totals-row" id="rowSubtotal">
+          <span>Subtotal</span><span id="subtotalVal">₹ 0.00</span>
+        </div>
+        <div class="totals-row" id="rowCgst" style="display:none">
+          <span>CGST @ 9%</span><span id="cgstVal">₹ 0.00</span>
+        </div>
+        <div class="totals-row" id="rowSgst" style="display:none">
+          <span>SGST @ 9%</span><span id="sgstVal">₹ 0.00</span>
+        </div>
+        <div class="totals-row" id="rowIgst" style="display:none">
+          <span>IGST @</span><span id="igstVal">₹ 0.00</span>
+        </div>
+        <div class="totals-row total">
+          <span>Grand Total</span><span id="grandTotalVal">₹ 0.00</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAX OPTIONS (Aerosky only) -->
+    <div class="form-section" id="taxSection" style="display:none">
+      <div class="section-title"><span class="section-icon">🧾</span> Tax Options</div>
+      <div class="form-grid">
+        <div class="field">
+          <label>Tax Type</label>
+          <select id="taxType" onchange="recalc()">
+            <option value="cgst_sgst">CGST + SGST (9% each)</option>
+            <option value="igst">IGST (specify %)</option>
+            <option value="none">No Tax</option>
+          </select>
+        </div>
+        <div class="field" id="igstRateField" style="display:none">
+          <label>IGST Rate (%)</label>
+          <input type="number" id="igstRate" value="18" min="0" max="28" onchange="recalc()">
+        </div>
+      </div>
+    </div>
+
+    <!-- NOTES -->
+    <div class="form-section">
+      <div class="section-title"><span class="section-icon">📝</span> Notes / Terms</div>
+      <div class="form-grid full">
+        <div class="field">
+          <label>Additional Notes</label>
+          <textarea id="notes" rows="3" placeholder="Any special notes..."></textarea>
+        </div>
+      </div>
+    </div>
+
+    <div style="text-align:center;padding:16px 0 40px">
+      <button class="btn-preview" id="previewBtn2" onclick="showPreview()" style="padding:16px 48px;font-size:1rem;border-radius:12px;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:600;color:white;">Preview & Print Invoice</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── PREVIEW OVERLAY ─── -->
+<div class="preview-overlay" id="previewOverlay">
+  <div class="preview-actions">
+    <button class="print-btn" onclick="downloadPDF(this)" id="downloadBtn" style="background:#1B5E20;color:white;font-weight:700;font-size:1rem;padding:14px 32px;border-radius:10px;min-width:220px;cursor:pointer;border:none;">⬇ Download PDF (A4)</button>
+    <button class="close-btn" onclick="closePreview()">✕ Close</button>
+  </div>
+  <div class="invoice-paper" id="invoicePaper"></div>
+</div>
+
+<script>
+  let currentCompany = 'aerosky';
+  let items = [];
+  let itemCounter = 0;
+
+  function selectCompany(company) {
+    currentCompany = company;
+    document.getElementById('selectorScreen').style.display = 'none';
+    document.getElementById('formPage').classList.add('active');
+
+    const dot = document.getElementById('headerDot');
+    const title = document.getElementById('headerTitle');
+    const prevBtn = document.getElementById('previewBtn');
+    const prevBtn2 = document.getElementById('previewBtn2');
+    const taxSection = document.getElementById('taxSection');
+
+    if (company === 'aerosky') {
+      dot.className = 'pill-dot aerosky-dot';
+      title.textContent = 'Aerosky Hospitality — Invoice';
+      prevBtn.className = 'btn-preview aerosky-btn';
+      prevBtn2.style.background = '#1B5E20';
+      taxSection.style.display = 'block';
+      // Pre-fill Aerosky defaults
+      document.getElementById('invoiceNo').value = '104';
+    } else {
+      dot.className = 'pill-dot dev-dot';
+      title.textContent = 'Dev Caterers & Decorators — Invoice';
+      prevBtn.className = 'btn-preview dev-btn';
+      prevBtn2.style.background = '#8B3A0A';
+      taxSection.style.display = 'none';
+      document.getElementById('invoiceNo').value = '11210';
+    }
+
+    // Set today's date
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('invoiceDate').value = today;
+
+    // Pre-add one item
+    items = [];
+    document.getElementById('itemsBody').innerHTML = '';
+    if (company === 'aerosky') {
+      addItemWithData('DAY HI-TEA & STARTERS', 75, 500);
+    } else {
+      addItemWithData('HI-TEA WITH STARTERS 10-AM TO 5PM', 325, 600);
+    }
+  }
+
+  function addItem() {
+    addItemWithData('', 0, 0);
+  }
+
+  function addItemWithData(desc, qty, rate) {
+    const id = ++itemCounter;
+    items.push({ id });
+    const tbody = document.getElementById('itemsBody');
+    const tr = document.createElement('tr');
+    tr.id = `row_${id}`;
+    tr.innerHTML = `
+      <td><input type="text" value="${desc}" placeholder="Description of service" onchange="recalc()"></td>
+      <td><input type="number" value="${qty}" min="0" style="text-align:center" oninput="calcRow(${id})" onchange="recalc()"></td>
+      <td><input type="number" value="${rate}" min="0" style="text-align:center" oninput="calcRow(${id})" onchange="recalc()"></td>
+      <td><input type="number" id="amt_${id}" value="${qty*rate}" readonly style="text-align:right;background:#f8f8f8;font-weight:600"></td>
+      <td><button class="remove-btn" onclick="removeItem(${id})">✕</button></td>
+    `;
+    tbody.appendChild(tr);
+    recalc();
+  }
+
+  function calcRow(id) {
+    const row = document.getElementById(`row_${id}`);
+    const inputs = row.querySelectorAll('input');
+    const qty = parseFloat(inputs[1].value) || 0;
+    const rate = parseFloat(inputs[2].value) || 0;
+    document.getElementById(`amt_${id}`).value = (qty * rate).toFixed(2);
+    recalc();
+  }
+
+  function removeItem(id) {
+    document.getElementById(`row_${id}`)?.remove();
+    items = items.filter(i => i.id !== id);
+    recalc();
+  }
+
+  function recalc() {
+    const rows = document.querySelectorAll('#itemsBody tr');
+    let subtotal = 0;
+    rows.forEach(row => {
+      const inputs = row.querySelectorAll('input');
+      const qty = parseFloat(inputs[1].value) || 0;
+      const rate = parseFloat(inputs[2].value) || 0;
+      const amt = qty * rate;
+      inputs[3].value = amt.toFixed(2);
+      subtotal += amt;
+    });
+
+    const fmt = v => '₹ ' + v.toLocaleString('en-IN', {minimumFractionDigits:2});
+    document.getElementById('subtotalVal').textContent = fmt(subtotal);
+
+    let grand = subtotal;
+    const taxType = document.getElementById('taxType')?.value || 'none';
+
+    document.getElementById('rowCgst').style.display = 'none';
+    document.getElementById('rowSgst').style.display = 'none';
+    document.getElementById('rowIgst').style.display = 'none';
+    document.getElementById('igstRateField').style.display = 'none';
+
+    if (currentCompany === 'aerosky') {
+      if (taxType === 'cgst_sgst') {
+        const tax = subtotal * 0.09;
+        document.getElementById('rowCgst').style.display = 'flex';
+        document.getElementById('rowSgst').style.display = 'flex';
+        document.getElementById('cgstVal').textContent = fmt(tax);
+        document.getElementById('sgstVal').textContent = fmt(tax);
+        grand = subtotal + tax * 2;
+      } else if (taxType === 'igst') {
+        const rate = parseFloat(document.getElementById('igstRate')?.value) || 18;
+        document.getElementById('igstRateField').style.display = 'flex';
+        const tax = subtotal * rate / 100;
+        document.getElementById('rowIgst').style.display = 'flex';
+        document.getElementById('igstVal').textContent = fmt(tax);
+        grand = subtotal + tax;
+      }
+    }
+
+    document.getElementById('grandTotalVal').textContent = fmt(grand);
+  }
+
+  function numToWords(n) {
+    const a = ['','One','Two','Three','Four','Five','Six','Seven','Eight','Nine','Ten','Eleven','Twelve','Thirteen','Fourteen','Fifteen','Sixteen','Seventeen','Eighteen','Nineteen'];
+    const b = ['','','Twenty','Thirty','Forty','Fifty','Sixty','Seventy','Eighty','Ninety'];
+    function inWords(num) {
+      if (num === 0) return '';
+      if (num < 20) return a[num] + ' ';
+      if (num < 100) return b[Math.floor(num/10)] + ' ' + a[num%10] + ' ';
+      if (num < 1000) return a[Math.floor(num/100)] + ' Hundred ' + inWords(num%100);
+      if (num < 100000) return inWords(Math.floor(num/1000)) + 'Thousand ' + inWords(num%1000);
+      if (num < 10000000) return inWords(Math.floor(num/100000)) + 'Lakh ' + inWords(num%100000);
+      return inWords(Math.floor(num/10000000)) + 'Crore ' + inWords(num%10000000);
+    }
+    return (inWords(Math.floor(n)).trim() + ' Only').toUpperCase();
+  }
+
+  function gatherData() {
+    const rows = document.querySelectorAll('#itemsBody tr');
+    const lineItems = [];
+    rows.forEach(row => {
+      const inputs = row.querySelectorAll('input');
+      lineItems.push({
+        desc: inputs[0].value,
+        qty: inputs[1].value,
+        rate: parseFloat(inputs[2].value) || 0,
+        amt: parseFloat(inputs[3].value) || 0
+      });
+    });
+
+    let subtotal = lineItems.reduce((s,i) => s + i.amt, 0);
+    const taxType = document.getElementById('taxType')?.value || 'none';
+    let cgst = 0, sgst = 0, igst = 0, grand = subtotal;
+
+    if (currentCompany === 'aerosky') {
+      if (taxType === 'cgst_sgst') {
+        cgst = sgst = subtotal * 0.09;
+        grand = subtotal + cgst + sgst;
+      } else if (taxType === 'igst') {
+        const r = parseFloat(document.getElementById('igstRate')?.value) || 18;
+        igst = subtotal * r / 100;
+        grand = subtotal + igst;
+      }
+    }
+
+    return {
+      buyerName: document.getElementById('buyerName').value,
+      buyerAddr1: document.getElementById('buyerAddr1').value,
+      buyerAddr2: document.getElementById('buyerAddr2').value,
+      buyerGstin: document.getElementById('buyerGstin').value,
+      buyerState: document.getElementById('buyerState').value,
+      invoiceNo: document.getElementById('invoiceNo').value,
+      invoiceDate: document.getElementById('invoiceDate').value,
+      supplyDate: document.getElementById('supplyDate').value,
+      venueAddr: document.getElementById('venueAddr').value,
+      notes: document.getElementById('notes').value,
+      lineItems, subtotal, cgst, sgst, igst, grand, taxType
+    };
+  }
+
+  function fmt(v) { return '₹ ' + v.toLocaleString('en-IN', {minimumFractionDigits:2}); }
+
+  function renderAeroskyInvoice(d) {
+    const rows = d.lineItems.map(item => `
+      <tr>
+        <td>${item.desc}</td>
+        <td style="text-align:center">${item.qty} PAX</td>
+        <td style="text-align:center">${fmt(item.rate)}</td>
+        <td style="text-align:right">${fmt(item.amt)}</td>
+      </tr>`).join('');
+
+    const taxRows = d.taxType === 'cgst_sgst' ? `
+      <div class="inv-totals-row"><span>Total before GST</span><span>${fmt(d.subtotal)}</span></div>
+      <div class="inv-totals-row"><span>CGST @ 9%</span><span>${fmt(d.cgst)}</span></div>
+      <div class="inv-totals-row"><span>SGST @ 9%</span><span>${fmt(d.sgst)}</span></div>
+    ` : d.taxType === 'igst' ? `
+      <div class="inv-totals-row"><span>Total before GST</span><span>${fmt(d.subtotal)}</span></div>
+      <div class="inv-totals-row"><span>IGST</span><span>${fmt(d.igst)}</span></div>
+    ` : `<div class="inv-totals-row"><span>Total Amount</span><span>${fmt(d.subtotal)}</span></div>`;
+
+    return `
+      <div class="inv-header-aerosky">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start">
+          <div>
+            <div class="inv-company-name-aerosky">AEROSKY HOSPITALITY</div>
+            <div class="inv-tagline-aerosky">A Luxury Catering & Decor Company &nbsp;·&nbsp; ESTD 2001</div>
+            <div class="inv-address-aerosky">Kh. No. 55/6/1, Raj Nagar, Palam, South West Delhi - 110077<br>
+            GSTIN: 07CXEPP0735N2Z3 &nbsp;|&nbsp; State: DELHI, Code: 07<br>
+            📞 8800878545 &nbsp;|&nbsp; ✉ info.aeroskyhospitality@gmail.com</div>
+          </div>
+          <div style="text-align:right;color:rgba(255,255,255,0.8);font-size:9px">
+            <div style="color:var(--gold);font-size:14px;font-weight:700;font-family:'Playfair Display',serif">TAX INVOICE</div>
+          </div>
+        </div>
+      </div>
+      <div class="inv-title-strip-aerosky">Tax Invoice</div>
+      <div class="inv-meta">
+        <div class="inv-meta-block">
+          <h4>Buyer (Bill To)</h4>
+          <p><strong>${d.buyerName}</strong><br>${d.buyerAddr1}<br>${d.buyerAddr2}<br>
+          ${d.buyerGstin ? 'GSTIN: '+d.buyerGstin+'<br>' : ''}
+          State: ${d.buyerState}</p>
+        </div>
+        <div class="inv-meta-block" style="border-left:1px solid var(--border);padding-left:24px">
+          <h4>Function Address</h4>
+          <p><strong>${d.buyerName}</strong><br>${d.buyerAddr1}<br>${d.buyerAddr2}</p>
+        </div>
+        <div style="grid-column:span 2">
+          <div class="inv-details-grid">
+            <div class="inv-detail-cell"><div class="dkey">Invoice No.</div><div class="dval">${d.invoiceNo}</div></div>
+            <div class="inv-detail-cell"><div class="dkey">Invoice Date</div><div class="dval">${d.invoiceDate}</div></div>
+            <div class="inv-detail-cell"><div class="dkey">Date of Supply</div><div class="dval">${d.supplyDate || '—'}</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="inv-table-wrap">
+        <table class="inv-table">
+          <thead><tr class="aerosky-thead">
+            <th>Description of Goods</th><th>Quantity</th><th>Rate</th><th>Amount</th>
+          </tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+      <div class="inv-footer-section">
+        <div>
+          <div class="inv-words-box">
+            <strong>Amount in Words:</strong>
+            ${numToWords(Math.round(d.grand))} RUPEE ONLY
+          </div>
+          ${d.notes ? `<div style="margin-top:12px;font-size:9.5px;color:var(--gray)">${d.notes}</div>` : ''}
+          <div class="bank-details" style="margin-top:12px">
+            <strong>Bank Details</strong>
+            Bank: Kotak Mahindra Bank<br>
+            IFSC: KKBK0004674<br>
+            A/c No.: 1548439888<br>
+            Account Name: AEROSKY HOSPITALITY
+          </div>
+        </div>
+        <div>
+          <div class="inv-totals">
+            ${taxRows}
+            <div class="inv-totals-row grand aerosky-grand">
+              <span>NET PAYABLE</span><span>${fmt(d.grand)}</span>
+            </div>
+          </div>
+          <div class="inv-signature-block">
+            <div style="color:var(--gray)">For AEROSKY HOSPITALITY</div>
+            <div class="sig-name">Proprietor</div>
+          </div>
+        </div>
+      </div>
+      <div class="inv-terms">
+        <strong>Terms & Conditions</strong>
+        Subject to Delhi Jurisdiction only. · Certified that the particulars given above are true and correct.
+        ${d.notes ? '<br>Note: '+d.notes : ''}
+      </div>`;
+  }
+
+  function renderDevInvoice(d) {
+    const rows = d.lineItems.map(item => `
+      <tr>
+        <td>${item.desc}</td>
+        <td style="text-align:center">${item.qty}</td>
+        <td style="text-align:center">${fmt(item.rate)}</td>
+        <td style="text-align:right">${fmt(item.amt)}</td>
+      </tr>`).join('');
+
+    return `
+      <div class="inv-header-dev">
+        <div style="text-align:center">
+          <div class="inv-company-name-dev">DEV CATERERS & DECORATORS</div>
+          <div class="inv-tagline-dev">Corporate Events | Wedding Events | Entertainment | Decoration | Catering</div>
+          <div class="inv-address-dev" style="margin-top:6px">PLOT NO 22, SECTOR 9, DWARKA, New Delhi - 110077 &nbsp;·&nbsp; M: 9811339509</div>
+        </div>
+      </div>
+      <div class="inv-title-strip-dev">Invoice</div>
+      <div class="inv-meta">
+        <div class="inv-meta-block">
+          <h4>Buyer Details</h4>
+          <p><strong>${d.buyerName}</strong><br>${d.buyerAddr1}<br>${d.buyerAddr2}</p>
+          <p style="margin-top:8px">State: ${d.buyerState}</p>
+          ${d.venueAddr ? `<p style="margin-top:8px"><strong>Venue:</strong> ${d.venueAddr}</p>` : ''}
+        </div>
+        <div class="inv-meta-block" style="border-left:1px solid var(--border);padding-left:24px">
+          <div class="inv-details-grid" style="display:block">
+            <div class="inv-detail-cell" style="border:none;padding:0 0 10px"><div class="dkey">Invoice No.</div><div class="dval">${d.invoiceNo}</div></div>
+            <div class="inv-detail-cell" style="border:none;padding:0 0 10px"><div class="dkey">Invoice Date</div><div class="dval">${d.invoiceDate}</div></div>
+            ${d.supplyDate ? `<div class="inv-detail-cell" style="border:none;padding:0"><div class="dkey">Date of Supply</div><div class="dval">${d.supplyDate}</div></div>` : ''}
+          </div>
+        </div>
+      </div>
+      <div class="inv-table-wrap">
+        <table class="inv-table">
+          <thead><tr>
+            <th>Particulars</th><th>QTY/PAX</th><th>Rate</th><th>Amount</th>
+          </tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+      <div class="inv-footer-section">
+        <div>
+          <div class="inv-words-box">
+            <strong>Payable Amount in Words:</strong>
+            ${numToWords(Math.round(d.grand))} RUPEE ONLY
+          </div>
+          ${d.notes ? `<div style="margin-top:12px;font-size:9px;color:var(--gray)">${d.notes}</div>` : ''}
+        </div>
+        <div>
+          <div class="inv-totals">
+            <div class="inv-totals-row"><span>Total Amount</span><span>${fmt(d.subtotal)}</span></div>
+            <div class="inv-totals-row grand">
+              <span>Grand Total</span><span>${fmt(d.grand)}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="inv-terms">
+        <strong>Declaration</strong>
+        The Details of Claim mentioned are true & correct as per price offered.<br>
+        All disputes are subjected to Delhi Jurisdiction only.<br>
+        <strong style="margin-top:8px">Payment Terms:</strong> 25% on Confirmation, 50% 30 days before Function, Balance 25% before start of Main Course.<br>
+        On Function Day, extra plates will be charged according to Menu Pricing. Advance will NOT be returned in any circumstance.
+      </div>`;
+  }
+
+  function showPreview() {
+    const d = gatherData();
+    const paper = document.getElementById('invoicePaper');
+    paper.innerHTML = currentCompany === 'aerosky' ? renderAeroskyInvoice(d) : renderDevInvoice(d);
+    document.getElementById('previewOverlay').classList.add('active');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closePreview() {
+    document.getElementById('previewOverlay').classList.remove('active');
+    document.body.style.overflow = '';
+  }
+
+  function goBack() {
+    document.getElementById('formPage').classList.remove('active');
+    document.getElementById('selectorScreen').style.display = 'flex';
+  }
+
+  /* ── PDF via hidden iframe: no popups, no CDN, direct .pdf save ── */
+  function buildInvoiceHTML() {
+    const paper = document.getElementById('invoicePaper').innerHTML;
+    const d = gatherData();
+    const invNo = d.invoiceNo || 'invoice';
+    const company = currentCompany === 'aerosky' ? 'Aerosky' : 'DevCaterers';
+    const title = `${company}-Invoice-${invNo}`;
+
+    /* Every CSS rule the invoice needs, fully inlined, no external refs */
+    const css = `
+      @page { size: 210mm 297mm; margin: 0; }
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+      html { width: 210mm; }
+      body {
+        width: 210mm;
+        min-height: 297mm;
+        font-family: Arial, sans-serif;
+        font-size: 11px;
+        color: #1A1A1A;
+        background: #fff;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      :root {
+        --gold: #C9A84C; --green: #1B5E20; --cream: #FAFAF5;
+        --dark: #1A1A1A; --gray: #6B6B6B; --border: #E0DDD5;
+      }
+      /* ── header ── */
+      .inv-header-aerosky {
+        background: #1B5E20 !important;
+        -webkit-print-color-adjust: exact; print-color-adjust: exact;
+        padding: 32px 40px 24px; color: white;
+      }
+      .inv-header-dev { padding: 28px 40px 20px; border-bottom: 3px solid #1A1A1A; }
+      .inv-company-name-aerosky { font-size: 28px; color: #C9A84C; font-weight: 700; letter-spacing: .05em; margin-bottom: 4px; }
+      .inv-company-name-dev   { font-size: 26px; font-weight: 700; color: #1A1A1A; margin-bottom: 2px; }
+      .inv-tagline-aerosky { font-size: 10px; color: rgba(255,255,255,.7); letter-spacing: .12em; text-transform: uppercase; margin-bottom: 8px; }
+      .inv-tagline-dev     { font-size: 9px; color: #6B6B6B; letter-spacing: .08em; text-transform: uppercase; margin-bottom: 4px; }
+      .inv-address-aerosky { font-size: 9.5px; color: rgba(255,255,255,.8); line-height: 1.6; }
+      .inv-address-dev     { font-size: 9.5px; color: #6B6B6B; line-height: 1.6; }
+      /* ── title strip ── */
+      .inv-title-strip-aerosky {
+        background: #C9A84C !important; -webkit-print-color-adjust: exact; print-color-adjust: exact;
+        text-align: center; padding: 8px; font-size: 10px; font-weight: 700;
+        letter-spacing: .25em; color: #1A1A1A; text-transform: uppercase;
+      }
+      .inv-title-strip-dev {
+        background: #1A1A1A !important; -webkit-print-color-adjust: exact; print-color-adjust: exact;
+        text-align: center; padding: 8px; font-size: 10px; font-weight: 700;
+        letter-spacing: .25em; color: white; text-transform: uppercase;
+      }
+      /* ── meta / billing ── */
+      .inv-meta { display: grid; grid-template-columns: 1fr 1fr; padding: 24px 40px; border-bottom: 1px solid #E0DDD5; }
+      .inv-meta-block h4 { font-size: 8px; text-transform: uppercase; letter-spacing: .12em; color: #6B6B6B; margin-bottom: 8px; font-weight: 600; }
+      .inv-meta-block p   { font-size: 10.5px; line-height: 1.7; color: #1A1A1A; font-weight: 500; }
+      .inv-details-grid   { display: grid; grid-template-columns: repeat(3,1fr); border-top: 1px solid #E0DDD5; margin-top: 16px; }
+      .inv-detail-cell    { padding: 10px 12px; border-right: 1px solid #E0DDD5; }
+      .inv-detail-cell:last-child { border-right: none; }
+      .inv-detail-cell .dkey { font-size: 7.5px; color: #6B6B6B; text-transform: uppercase; letter-spacing: .1em; font-weight: 600; }
+      .inv-detail-cell .dval { font-size: 11px; font-weight: 700; margin-top: 3px; color: #1A1A1A; }
+      /* ── items table ── */
+      .inv-table-wrap { padding: 0 40px 24px; }
+      .inv-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+      .inv-table thead tr           { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .inv-table thead tr:not(.aerosky-thead) { background: #1A1A1A !important; color: white; }
+      .aerosky-thead { background: #1B5E20 !important; color: white; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .inv-table th { padding: 10px 12px; font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: .1em; text-align: left; }
+      .inv-table th:last-child, .inv-table td:last-child { text-align: right; }
+      .inv-table th:nth-child(2), .inv-table td:nth-child(2),
+      .inv-table th:nth-child(3), .inv-table td:nth-child(3) { text-align: center; }
+      .inv-table tbody tr            { border-bottom: 1px solid #E0DDD5; }
+      .inv-table tbody tr:nth-child(even) { background: #FAFAF5 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .inv-table td { padding: 11px 12px; font-size: 10.5px; color: #1A1A1A; vertical-align: top; }
+      /* ── footer ── */
+      .inv-footer-section { display: grid; grid-template-columns: 1fr 280px; padding: 0 40px 32px; align-items: start; }
+      .inv-totals           { border: 1px solid #E0DDD5; border-radius: 8px; overflow: hidden; }
+      .inv-totals-row       { display: flex; justify-content: space-between; padding: 9px 14px; font-size: 10.5px; border-bottom: 1px solid #E0DDD5; }
+      .inv-totals-row:last-child { border-bottom: none; }
+      .inv-totals-row.grand { background: #1A1A1A !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; color: white; font-weight: 700; font-size: 12px; }
+      .inv-totals-row.grand.aerosky-grand { background: #1B5E20 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .inv-words-box  { background: #FAFAF5 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; border: 1px solid #E0DDD5; border-radius: 8px; padding: 14px; margin-top: 16px; font-size: 9.5px; line-height: 1.5; color: #6B6B6B; }
+      .inv-words-box strong { color: #1A1A1A; font-size: 10px; display: block; margin-bottom: 4px; }
+      .inv-signature-block  { text-align: right; padding-top: 40px; font-size: 10px; color: #6B6B6B; }
+      .inv-signature-block .sig-name { font-weight: 700; color: #1A1A1A; font-size: 11px; margin-top: 8px; }
+      .inv-terms { padding: 20px 40px; background: #FAFAF5 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; border-top: 1px solid #E0DDD5; font-size: 9px; color: #6B6B6B; line-height: 1.7; }
+      .inv-terms strong { color: #1A1A1A; display: block; margin-bottom: 4px; text-transform: uppercase; letter-spacing: .08em; font-size: 8.5px; }
+      .bank-details { background: #f0f8f0 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; border: 1px solid #c8e6c9; border-radius: 8px; padding: 14px; font-size: 9.5px; line-height: 1.7; }
+      .bank-details strong { display: block; margin-bottom: 4px; font-size: 9px; text-transform: uppercase; letter-spacing: .1em; color: #1B5E20; }
+    `;
+
+    return { title, css, paper };
+  }
+
+  /* ═══════════════════════════════════════════════════════════════
+     PURE JS PDF GENERATOR  — no CDN, no popups, direct .pdf file
+     Strategy: render invoice onto a <canvas> at A4 pixel size,
+     then encode canvas pixels into a valid PDF binary and force
+     browser download via <a download>.
+     A4 @ 150dpi = 1240 × 1754 px  (good quality, reasonable size)
+  ═══════════════════════════════════════════════════════════════ */
+
+  async function downloadPDF(btn) {
+    const orig = btn.innerHTML;
+    btn.innerHTML = '⏳ Generating PDF…';
+    btn.disabled = true;
+
+    try {
+      const d = gatherData();
+      const invNo = d.invoiceNo || 'invoice';
+      const company = currentCompany === 'aerosky' ? 'Aerosky' : 'DevCaterers';
+      const filename = `${company}-Invoice-${invNo}.pdf`;
+
+      /* ── 1. Render invoice into an off-screen container ── */
+      const { css, paper } = buildInvoiceHTML();
+
+      // A4 at 150 dpi
+      const PX_W = 1240;
+      const PX_H = 1754;
+
+      // Build a same-origin blob URL so canvas can capture it
+      const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+        <style>
+          *{box-sizing:border-box;margin:0;padding:0}
+          body{width:${PX_W}px;background:#fff;font-family:Arial,sans-serif;}
+          ${css}
+        </style></head><body>${paper}</body></html>`;
+
+      /* ── 2. Draw into canvas via foreignObject SVG trick ── */
+      const canvas = document.createElement('canvas');
+      canvas.width  = PX_W;
+      canvas.height = PX_H;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, PX_W, PX_H);
+
+      // Use an off-screen iframe to measure/draw
+      const frame = document.createElement('iframe');
+      frame.style.cssText = `position:fixed;left:-9999px;top:-9999px;width:${PX_W}px;height:${PX_H}px;border:none;`;
+      document.body.appendChild(frame);
+
+      await new Promise(resolve => {
+        frame.onload = resolve;
+        frame.srcdoc = html;
+        setTimeout(resolve, 2000); // fallback
+      });
+
+      // Extra wait for render
+      await new Promise(r => setTimeout(r, 500));
+
+      /* ── 3. Capture invoice as image via SVG foreignObject ── */
+      let imgDataUrl;
+
+      // Try SVG foreignObject capture (works without CORS)
+      try {
+        const svgStr = `<svg xmlns="http://www.w3.org/2000/svg" width="${PX_W}" height="${PX_H}">
+          <foreignObject width="100%" height="100%">
+            <div xmlns="http://www.w3.org/1999/xhtml"
+                 style="width:${PX_W}px;height:${PX_H}px;overflow:hidden;background:white;">
+              ${paper.replace(/<script[\s\S]*?<\/script>/gi, '')}
+            </div>
+          </foreignObject>
+        </svg>`;
+        const svgBlob = new Blob([svgStr], {type:'image/svg+xml;charset=utf-8'});
+        const svgUrl  = URL.createObjectURL(svgBlob);
+        await new Promise((res, rej) => {
+          const img = new Image();
+          img.onload = () => { ctx.drawImage(img, 0, 0, PX_W, PX_H); res(); };
+          img.onerror = rej;
+          img.src = svgUrl;
+          setTimeout(res, 3000);
+        });
+        URL.revokeObjectURL(svgUrl);
+        imgDataUrl = canvas.toDataURL('image/jpeg', 0.92);
+      } catch(e) {
+        // last resort: white canvas with text message
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(0,0,PX_W,PX_H);
+        ctx.fillStyle = '#1B5E20';
+        ctx.font = 'bold 40px Arial';
+        ctx.fillText('Invoice — ' + (d.invoiceNo||''), 60, 100);
+        imgDataUrl = canvas.toDataURL('image/jpeg', 0.92);
+      }
+
+      frame.remove();
+
+      /* ── 4. Build a minimal valid PDF with the JPEG image ── */
+      // Strip data:image/jpeg;base64, prefix
+      const b64 = imgDataUrl.split(',')[1];
+      const jpegBytes = atob(b64);
+      const jpegLen   = jpegBytes.length;
+
+      // PDF uses byte offsets for cross-reference table — build carefully
+      const enc = s => s;
+
+      // Object 1: catalog
+      // Object 2: pages
+      // Object 3: page (A4: 595.28 x 841.89 pts)
+      // Object 4: image XObject
+      // Object 5: resources
+      // Object 6: content stream
+
+      const W_PT = 595.28; // A4 width  in points
+      const H_PT = 841.89; // A4 height in points
+
+      let pdf = '';
+      const offsets = [];
+
+      const out = s => { pdf += s + '\n'; };
+
+      out('%PDF-1.4');
+      out('%\xFF\xFF\xFF\xFF'); // binary marker
+
+      // Obj 1: Catalog
+      offsets[1] = pdf.length;
+      out('1 0 obj');
+      out('<< /Type /Catalog /Pages 2 0 R >>');
+      out('endobj');
+
+      // Obj 2: Pages
+      offsets[2] = pdf.length;
+      out('2 0 obj');
+      out('<< /Type /Pages /Kids [3 0 R] /Count 1 >>');
+      out('endobj');
+
+      // Obj 4: JPEG Image XObject (must come before Page so we know nothing depends on order)
+      offsets[4] = pdf.length;
+      out('4 0 obj');
+      out(`<< /Type /XObject /Subtype /Image`);
+      out(`   /Width ${PX_W} /Height ${PX_H}`);
+      out(`   /ColorSpace /DeviceRGB /BitsPerComponent 8`);
+      out(`   /Filter /DCTDecode /Length ${jpegLen} >>`);
+      out('stream');
+      // We'll insert raw bytes after; track position
+      const streamStart = pdf.length;
+      pdf += jpegBytes; // raw binary
+      pdf += '\n';
+      out('endstream');
+      out('endobj');
+
+      // Obj 5: Resources
+      offsets[5] = pdf.length;
+      out('5 0 obj');
+      out('<< /ProcSet [/PDF /ImageC]');
+      out('   /XObject << /Im1 4 0 R >> >>');
+      out('endobj');
+
+      // Obj 6: Content stream — draw image to fill page
+      const content = `q ${W_PT} 0 0 ${H_PT} 0 0 cm /Im1 Do Q`;
+      offsets[6] = pdf.length;
+      out('6 0 obj');
+      out(`<< /Length ${content.length} >>`);
+      out('stream');
+      out(content);
+      out('endstream');
+      out('endobj');
+
+      // Obj 3: Page
+      offsets[3] = pdf.length;
+      out('3 0 obj');
+      out('<< /Type /Page /Parent 2 0 R');
+      out(`   /MediaBox [0 0 ${W_PT} ${H_PT}]`);
+      out('   /Resources 5 0 R');
+      out('   /Contents 6 0 R >>');
+      out('endobj');
+
+      // Cross-reference table
+      const xrefOffset = pdf.length;
+      out('xref');
+      out(`0 7`);
+      out('0000000000 65535 f ');
+      for (let i = 1; i <= 6; i++) {
+        out(String(offsets[i]).padStart(10,'0') + ' 00000 n ');
+      }
+
+      out('trailer');
+      out('<< /Size 7 /Root 1 0 R >>');
+      out('startxref');
+      out(String(xrefOffset));
+      out('%%EOF');
+
+      /* ── 5. Force download as .pdf ── */
+      // Build Uint8Array preserving raw binary bytes
+      const pdfBytes = new Uint8Array(pdf.length);
+      for (let i = 0; i < pdf.length; i++) {
+        pdfBytes[i] = pdf.charCodeAt(i) & 0xFF;
+      }
+      const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement('a');
+      a.href     = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 3000);
+
+    } catch(err) {
+      alert('Error generating PDF: ' + err.message);
+      console.error(err);
+    }
+
+    btn.innerHTML = orig;
+    btn.disabled  = false;
+  }
+
+  // Init
+  document.getElementById('taxType')?.addEventListener('change', function() {
+    document.getElementById('igstRateField').style.display = this.value === 'igst' ? 'flex' : 'none';
+    recalc();
+  });
+</script>
+</body>
+</html>
