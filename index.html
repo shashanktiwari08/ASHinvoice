@@ -68,7 +68,8 @@
   }
 
   .company-card {
-    width: 380px;
+    width: 100%;
+    max-width: 380px;
     border-radius: 24px;
     overflow: hidden;
     cursor: pointer;
@@ -668,6 +669,133 @@
 
   .bank-details strong { display: block; margin-bottom: 4px; font-size: 9px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--green); }
 
+  /* Mobile-first and Responsive Overrides */
+  .mobile-label {
+    display: none;
+  }
+
+  @media (max-width: 768px) {
+    .selector-screen {
+      padding: 40px 16px;
+    }
+    .form-header {
+      padding: 16px 20px;
+      flex-direction: column;
+      gap: 12px;
+      align-items: flex-start;
+    }
+    .form-header .header-btns {
+      width: 100%;
+      display: flex;
+      gap: 12px;
+    }
+    .form-header .header-btns button {
+      flex: 1;
+      text-align: center;
+      padding: 12px 16px;
+    }
+    .form-body {
+      padding: 20px 16px;
+    }
+    .form-section {
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+    .form-grid, .form-grid.three {
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+    .field.span2 {
+      grid-column: span 1;
+    }
+    .preview-overlay {
+      padding: 20px 10px;
+    }
+    .preview-actions {
+      width: 100%;
+      flex-direction: column;
+      gap: 8px;
+      top: 10px;
+    }
+    .preview-actions button {
+      width: 100%;
+      text-align: center;
+      padding: 12px;
+      min-width: unset !important;
+    }
+  }
+
+  @media (max-width: 600px) {
+    .items-table thead {
+      display: none;
+    }
+    .items-table, .items-table tbody, .items-table tr, .items-table td {
+      display: block;
+      width: 100%;
+    }
+    .items-table tr {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 16px;
+      background: var(--cream);
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .items-table td {
+      padding: 0 !important;
+      border: none;
+    }
+    .items-table td:first-child {
+      grid-column: span 2;
+    }
+    .items-table td:nth-child(2),
+    .items-table td:nth-child(3) {
+      grid-column: span 1;
+    }
+    .items-table td:nth-child(4) {
+      grid-column: span 2;
+    }
+    .items-table td:nth-child(5) {
+      grid-column: span 2;
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      margin-top: 4px;
+    }
+    .mobile-label {
+      display: block;
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: var(--gray);
+      margin-bottom: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .remove-btn {
+      width: 100%;
+      background: #FEE;
+      padding: 8px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 6px;
+    }
+  }
+
+  /* Preview Scale Container */
+  .invoice-scale-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    width: 100%;
+    overflow: visible;
+  }
+
   @media print {
     @page { size: A4 portrait; margin: 0; }
     body { background: white; margin: 0; padding: 0; }
@@ -880,7 +1008,9 @@
     <button class="print-btn" onclick="downloadPDF(this)" id="downloadBtn" style="background:#1B5E20;color:white;font-weight:700;font-size:1rem;padding:14px 32px;border-radius:10px;min-width:220px;cursor:pointer;border:none;">⬇ Download PDF (A4)</button>
     <button class="close-btn" onclick="closePreview()">✕ Close</button>
   </div>
-  <div class="invoice-paper" id="invoicePaper"></div>
+  <div class="invoice-scale-wrapper">
+    <div class="invoice-paper" id="invoicePaper"></div>
+  </div>
 </div>
 
 <script>
@@ -941,11 +1071,26 @@
     const tr = document.createElement('tr');
     tr.id = `row_${id}`;
     tr.innerHTML = `
-      <td><input type="text" value="${desc}" placeholder="Description of service" onchange="recalc()"></td>
-      <td><input type="number" value="${qty}" min="0" style="text-align:center" oninput="calcRow(${id})" onchange="recalc()"></td>
-      <td><input type="number" value="${rate}" min="0" style="text-align:center" oninput="calcRow(${id})" onchange="recalc()"></td>
-      <td><input type="number" id="amt_${id}" value="${qty*rate}" readonly style="text-align:right;background:#f8f8f8;font-weight:600"></td>
-      <td><button class="remove-btn" onclick="removeItem(${id})">✕</button></td>
+      <td>
+        <span class="mobile-label">Description</span>
+        <input type="text" value="${desc}" placeholder="Description of service" onchange="recalc()">
+      </td>
+      <td>
+        <span class="mobile-label">Qty / PAX</span>
+        <input type="number" value="${qty}" min="0" style="text-align:center" oninput="calcRow(${id})" onchange="recalc()">
+      </td>
+      <td>
+        <span class="mobile-label">Rate (₹)</span>
+        <input type="number" value="${rate}" min="0" style="text-align:center" oninput="calcRow(${id})" onchange="recalc()">
+      </td>
+      <td>
+        <span class="mobile-label">Amount (₹)</span>
+        <input type="number" id="amt_${id}" value="${qty*rate}" readonly style="text-align:right;background:#f8f8f8;font-weight:600">
+      </td>
+      <td>
+        <span class="mobile-label">&nbsp;</span>
+        <button class="remove-btn" onclick="removeItem(${id})">✕ Remove</button>
+      </td>
     `;
     tbody.appendChild(tr);
     recalc();
@@ -1233,17 +1378,47 @@
       </div>`;
   }
 
+  function adjustPreviewScale() {
+    const paper = document.getElementById('invoicePaper');
+    if (!paper) return;
+    const overlay = document.getElementById('previewOverlay');
+    if (!overlay.classList.contains('active')) return;
+    
+    const containerWidth = overlay.clientWidth - 40; // padding
+    if (containerWidth < 794) {
+      const scale = containerWidth / 794;
+      paper.style.transform = `scale(${scale})`;
+      paper.style.transformOrigin = 'top center';
+      const wrapper = paper.parentElement;
+      wrapper.style.height = (1123 * scale) + 'px';
+    } else {
+      paper.style.transform = '';
+      paper.style.transformOrigin = '';
+      const wrapper = paper.parentElement;
+      wrapper.style.height = '';
+    }
+  }
+  window.addEventListener('resize', adjustPreviewScale);
+
   function showPreview() {
     const d = gatherData();
     const paper = document.getElementById('invoicePaper');
     paper.innerHTML = currentCompany === 'aerosky' ? renderAeroskyInvoice(d) : renderDevInvoice(d);
     document.getElementById('previewOverlay').classList.add('active');
     document.body.style.overflow = 'hidden';
+    adjustPreviewScale();
   }
 
   function closePreview() {
     document.getElementById('previewOverlay').classList.remove('active');
     document.body.style.overflow = '';
+    const paper = document.getElementById('invoicePaper');
+    if (paper) {
+      paper.style.transform = '';
+      paper.style.transformOrigin = '';
+      const wrapper = paper.parentElement;
+      if (wrapper) wrapper.style.height = '';
+    }
   }
 
   function goBack() {
